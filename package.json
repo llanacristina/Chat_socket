@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/server.ts",
-    "client": "tsc src/client.ts --outDir public"
+    "client": "tsc src/client.ts --outDir ./dist"
   },
   "keywords": [],
   "author": "",

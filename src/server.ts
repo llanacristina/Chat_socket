@@ -6,23 +6,42 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+interface ExtWebSocket extends WebSocket {
+  nickname?: string;
+}
+
 app.use(express.static('public'));
 
-wss.on('connection', (ws) => {
-  console.log('Client connected');
+wss.on('connection', (ws: ExtWebSocket) => {
+  //console.log('Client connected');
 
   ws.on('message', (data) => {
-    const message = data.toString();  // Converte o buffer para string
-    console.log('Received:', message);
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
+    const message = data.toString();
+    const parsedMessage = JSON.parse(message);
+
+    if (parsedMessage.type === 'nickname') {
+      ws.nickname = parsedMessage.data;
+      console.log(`Client connected with nickname: ${ws.nickname}`);
+      return;
+    }
+
+    if (parsedMessage.type === 'message') {
+      const displayMessage = `${ws.nickname}: ${parsedMessage.data}`;
+      console.log(displayMessage);
+
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            nickname: ws.nickname,
+            message: parsedMessage.data
+          }));
+        }
+      });
+    }
   });
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    console.log(`Client ${ws.nickname || ''} disconnected`);
   });
 });
 
